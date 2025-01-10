@@ -4,9 +4,13 @@ namespace App\Livewire;
 use Livewire\Component;
 use App\Models\Product;
 use App\Models\Category;
+use App\Traits\HasBreadcrumbs;
+use Illuminate\Support\Facades\Log;
 
 class ProductForm extends Component
 {
+    use HasBreadcrumbs;
+
     public $name = '';
     public $barcode = '';
     public $description = '';
@@ -17,6 +21,7 @@ class ProductForm extends Component
     public $is_kitchen = false;
     public $productId;
     public $editMode = false;
+    public $parent_breadcrumbs;
 
     // Agregar método para guardar estado temporal
     private function saveTemporaryState()
@@ -37,7 +42,7 @@ class ProductForm extends Component
         ]);
     }
 
-    public function loadProduct()
+    private function loadProduct()
     {
         $product = Product::findOrFail($this->productId);
         $this->name = $product->name;
@@ -50,15 +55,20 @@ class ProductForm extends Component
         $this->is_kitchen = $product->is_kitchen;
     }
 
-    // Agregar método para limpiar estado temporal
     private function clearTemporaryState()
     {
         session()->forget('temp_product_form');
     }
 
-    // Modificar mount para cargar estado temporal si existe
-    public function mount($productId = null)
+    public function mount($productId = null, $parent_breadcrumbs = null)
     {
+        /*Log::info('ProductForm::mount', [
+            'productId' => $productId,
+            'parent_breadcrumbs' => $parent_breadcrumbs
+        ]);*/
+
+        $this->parent_breadcrumbs = $parent_breadcrumbs;
+
         // Primero verificamos si hay estado temporal
         if (session()->has('temp_product_form')) {
             $state = session('temp_product_form');
@@ -81,53 +91,54 @@ class ProductForm extends Component
         }
     }
 
-    // Modificar los métodos de actualización de propiedades
-    public function updatedName()
+    // Event handlers para actualizar el estado temporal
+    public function updated($propertyName)
     {
         $this->saveTemporaryState();
-    }
-    public function updatedBarcode()
-    {
-        $this->saveTemporaryState();
-    }
-    public function updatedDescription()
-    {
-        $this->saveTemporaryState();
-    }
-    public function updatedPrice()
-    {
-        $this->saveTemporaryState();
-    }
-    public function updatedCost()
-    {
-        $this->saveTemporaryState();
-    }
-    public function updatedCategoryId()
-    {
-        $this->saveTemporaryState();
-    }
-    public function updatedStock()
-    {
-        $this->saveTemporaryState();
-    }
-    public function updatedIsKitchen()
-    {
-        $this->saveTemporaryState();
-    }
-
-    public function addCategory()
-    {
-        $this->saveTemporaryState();
-        return redirect()->route('categories.create', ['redirect_to' => 'product']);
     }
 
     public function generateBarcode()
     {
         $barcode = Product::generateUniqueBarcode();
         $this->barcode = $barcode;
-        $this->saveTemporaryState(); // Mantener el estado temporal actualizado
+        $this->saveTemporaryState();
     }
 
+    protected function getBaseBreadcrumbs()
+    {
+        $parentBreadcrumbs = $this->decodeBreadcrumbs($this->parent_breadcrumbs);
+
+        $baseBreadcrumbs = [
+            ['name' => 'Productos', 'route' => 'products.index'],
+            ['name' => $this->editMode ? 'Editar Producto' : 'Nuevo Producto']
+        ];
+
+        return $parentBreadcrumbs ? array_merge($parentBreadcrumbs, $baseBreadcrumbs) : $baseBreadcrumbs;
+    }
+
+    public function addCategory()
+    {
+        $this->saveTemporaryState();
+
+        $breadcrumbs = [
+            ['name' => 'Productos', 'route' => 'products.index'],
+            ['name' => $this->editMode ? 'Editar Producto' : 'Nuevo Producto']
+        ];
+
+        $encodedBreadcrumbs = base64_encode(json_encode($breadcrumbs));
+
+        /*Log::info('ProductForm::addCategory - Redirecting to categories.create', [
+            'breadcrumbs' => $breadcrumbs,
+            'encoded' => $encodedBreadcrumbs,
+            'redirect_to' => 'product'
+        ]);*/
+
+        // Usar response()->redirectToRoute() para asegurar que los parámetros se pasen correctamente
+        return response()->redirectToRoute('categories.create', [
+            'redirect_to' => 'product',
+            'parent_breadcrumbs' => $encodedBreadcrumbs
+        ]);
+    }
     public function store()
     {
         $this->validate([
@@ -194,10 +205,12 @@ class ProductForm extends Component
 
     public function render()
     {
-        $breadcrumbs = [
-            ['name' => 'Productos', 'route' => 'products.index'],
-            ['name' => $this->editMode ? 'Editar Producto' : 'Nuevo Producto']
-        ];
+        $breadcrumbs = $this->getBaseBreadcrumbs();
+
+        /*Log::info('ProductForm::render', [
+            'breadcrumbs' => $breadcrumbs,
+            'parent_breadcrumbs' => $this->parent_breadcrumbs
+        ]);*/
 
         return view('livewire.product-form', [
             'categories' => Category::all(),
