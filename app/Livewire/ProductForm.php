@@ -26,6 +26,21 @@ class ProductForm extends Component
     // Agregar método para guardar estado temporal
     private function saveTemporaryState()
     {
+        Log::info('Guardando estado temporal', [
+            'current_state' => [
+                'name' => $this->name,
+                'barcode' => $this->barcode,
+                'description' => $this->description,
+                'price' => $this->price,
+                'cost' => $this->cost,
+                'category_id' => $this->category_id,
+                'stock' => $this->stock,
+                'is_kitchen' => $this->is_kitchen,
+                'edit_mode' => $this->editMode,
+                'product_id' => $this->productId
+            ]
+        ]);
+
         session([
             'temp_product_form' => [
                 'name' => $this->name,
@@ -41,7 +56,6 @@ class ProductForm extends Component
             ]
         ]);
     }
-
     private function loadProduct()
     {
         $product = Product::findOrFail($this->productId);
@@ -99,9 +113,26 @@ class ProductForm extends Component
 
     public function generateBarcode()
     {
-        $barcode = Product::generateUniqueBarcode();
-        $this->barcode = $barcode;
-        $this->saveTemporaryState();
+        Log::info('Iniciando generateBarcode en ProductForm');
+        try {
+            Log::info('Intentando generar código de barras');
+            $barcode = Product::generateUniqueBarcode();
+            Log::info('Código de barras generado:', ['barcode' => $barcode]);
+
+            // Asignación directa de la propiedad
+            $this->barcode = $barcode;
+
+            Log::info('Barcode asignado al componente:', ['this->barcode' => $this->barcode]);
+
+            // Forzar actualización
+            $this->dispatch('refresh-input');
+        } catch (\Exception $e) {
+            Log::error('Error al generar código de barras:', [
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
+            session()->flash('error', 'Error al generar el código de barras.');
+        }
     }
 
     protected function getBaseBreadcrumbs()
@@ -152,9 +183,11 @@ class ProductForm extends Component
             'is_kitchen' => 'boolean',
         ]);
 
+        $barcode = $this->barcode ? strval($this->barcode) : null;
+
         Product::create([
             'name' => $this->name,
-            'barcode' => $this->barcode,
+            'barcode' => $barcode,
             'description' => $this->description,
             'price' => $this->price,
             'cost' => $this->cost,
@@ -181,9 +214,11 @@ class ProductForm extends Component
             'is_kitchen' => 'boolean',
         ]);
 
+        $barcode = $this->barcode ? strval($this->barcode) : null;
+
         Product::find($this->productId)->update([
             'name' => $this->name,
-            'barcode' => $this->barcode,
+            'barcode' => $barcode,
             'description' => $this->description,
             'price' => $this->price,
             'cost' => $this->cost,

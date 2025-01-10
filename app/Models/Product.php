@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Facades\Log;
 
 class Product extends Model
 {
@@ -52,17 +53,39 @@ class Product extends Model
         return $this->belongsTo(Category::class);
     }
 
-    /**
-     * Genera un código de barras único
-     */
-    public static function generateUniqueBarcode()
-    {
-        do {
-            $barcode = mt_rand(1000000000, 9999999999); // Genera un código de 10 dígitos
-        } while (self::where('barcode', $barcode)->exists());
+  /**
+ * Genera un código de barras único
+ *
+ * @return string
+ */
+public static function generateUniqueBarcode()
+{
+    Log::info('Iniciando generateUniqueBarcode en Model');
 
-        return $barcode;
-    }
+    $attempts = 0;
+    $maxAttempts = 5;
+
+    do {
+        $barcode = strval(mt_rand(1000000000, 9999999999));
+        Log::info('Intento de generar barcode:', [
+            'attempt' => $attempts + 1,
+            'barcode' => $barcode
+        ]);
+
+        $exists = self::where('barcode', $barcode)->exists();
+        Log::info('Verificación de existencia:', ['exists' => $exists]);
+
+        $attempts++;
+        if ($attempts >= $maxAttempts) {
+            Log::error('Máximo de intentos alcanzado al generar barcode');
+            throw new \Exception('No se pudo generar un código de barras único después de ' . $maxAttempts . ' intentos');
+        }
+    } while ($exists);
+
+    Log::info('Barcode generado exitosamente:', ['barcode' => $barcode]);
+    return $barcode;
+}
+
 
     /**
      * Get the formatted price in Guaraníes

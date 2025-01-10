@@ -1,61 +1,64 @@
 <!-- resources/views/livewire/product-table.blade.php -->
-<div>
-    <x-breadcrumbs :breadcrumbs="$breadcrumbs" />
-    <div class="py-12">
-        <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
-            <div class="bg-white overflow-hidden shadow-xl sm:rounded-lg px-4 py-4">
-                <!-- Barra superior -->
-                <div class="mb-6">
-                    <div class="flex flex-col sm:flex-row justify-between gap-4">
-                        <div class="flex-1">
-                            <input wire:model.live="search" type="search"
-                                class="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
-                                placeholder="Buscar productos...">
-                        </div>
-                        <div class="flex-none">
-                            <a href="{{ route('products.create') }}"
-                                class="w-full sm:w-auto inline-flex justify-center items-center px-4 py-2 bg-gray-800 border border-transparent rounded-md font-semibold text-xs text-white uppercase tracking-widest hover:bg-gray-700">
-                                <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                        d="M12 4v16m8-8H4" />
-                                </svg>
-                                Nuevo Producto
-                            </a>
-                        </div>
-                    </div>
-                </div>
+<div class="flex flex-col h-screen bg-gray-100">
+    <!-- Barra superior fija con breadcrumb y controles -->
+    <div class="bg-white shadow">
+        <!-- Breadcrumb section -->
+        <div class="border-b border-gray-200">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                <x-breadcrumbs :breadcrumbs="$breadcrumbs" />
+            </div>
+        </div>
 
+        <!-- Barra de búsqueda y acciones -->
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex flex-col sm:flex-row justify-between items-center py-4 gap-4">
+                <div class="w-full sm:w-96">
+                    <input wire:model.live="search" type="search"
+                        class="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+                        placeholder="Buscar productos...">
+                </div>
+                <div class="flex-none">
+                    <a href="{{ route('products.create') }}"
+                        class="inline-flex justify-center items-center px-4 py-2 bg-gray-800 border border-transparent rounded-md font-semibold text-xs text-white uppercase tracking-widest hover:bg-gray-700">
+                        <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+                        </svg>
+                        Nuevo Producto
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Contenido Principal Scrolleable -->
+    <div class="flex-1 overflow-auto py-6">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="bg-white rounded-lg shadow">
                 <!-- Mensajes de alerta -->
                 @if (session()->has('message'))
-                    <div class="mb-6 bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded-lg relative"
-                        x-data="{ show: true }" x-show="show" x-init="setTimeout(() => show = false, 3000)">
+                    <div class="p-4 border-b border-gray-200 bg-green-100 rounded-t-lg" x-data="{ show: true }"
+                        x-show="show" x-init="setTimeout(() => show = false, 3000)">
                         <div class="flex items-center">
-                            <svg class="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 20 20">
+                            <svg class="w-5 h-5 mr-2 text-green-600" fill="currentColor" viewBox="0 0 20 20">
                                 <path fill-rule="evenodd"
                                     d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
                                     clip-rule="evenodd" />
                             </svg>
-                            <span>{{ session('message') }}</span>
+                            <span class="text-green-700">{{ session('message') }}</span>
                         </div>
                     </div>
                 @endif
 
                 @if (session()->has('error'))
-                    <div class="mb-6 bg-red-50 border-l-4 border-red-400 p-4 rounded-lg relative"
-                        x-data="{ show: true }" x-show="show" x-init="setTimeout(() => show = false, 5000)">
+                    <div class="p-4 border-b border-gray-200 bg-red-50 rounded-t-lg" x-data="{ show: true }"
+                        x-show="show" x-init="setTimeout(() => show = false, 5000)">
                         <div class="flex items-center">
-                            <div class="flex-shrink-0">
-                                <svg class="h-5 w-5 text-red-400" viewBox="0 0 20 20" fill="currentColor">
-                                    <path fill-rule="evenodd"
-                                        d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z"
-                                        clip-rule="evenodd" />
-                                </svg>
-                            </div>
-                            <div class="ml-3">
-                                <p class="text-sm text-red-700">
-                                    {{ session('error') }}
-                                </p>
-                            </div>
+                            <svg class="h-5 w-5 text-red-400 mr-2" viewBox="0 0 20 20" fill="currentColor">
+                                <path fill-rule="evenodd"
+                                    d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z"
+                                    clip-rule="evenodd" />
+                            </svg>
+                            <span class="text-red-700">{{ session('error') }}</span>
                         </div>
                     </div>
                 @endif
