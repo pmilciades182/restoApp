@@ -37,6 +37,11 @@
                             style="display: none;">
                             <div class="py-1">
 
+                                <a href="{{ route('invoices.index') }}"
+                                    class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 {{ request()->routeIs('invoices.*') ? 'bg-gray-100' : '' }}">
+                                    Facturas
+                                </a>
+
 
                                 <a href="{{ route('products.index') }}"
                                     class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 {{ request()->routeIs('products.*') ? 'bg-gray-100' : '' }}">
@@ -63,6 +68,9 @@
 
                             </div>
                         </div>
+
+
+
                     </div>
                 </div>
             </div>
