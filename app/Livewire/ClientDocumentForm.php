@@ -8,7 +8,7 @@ use App\Models\DocumentType;
 use App\Traits\HasBreadcrumbs;
 use Illuminate\Support\Facades\DB;
 use Livewire\Component;
-
+use Illuminate\Support\Facades\Log;
 class ClientDocumentForm extends Component
 {
     use HasBreadcrumbs;
@@ -29,27 +29,65 @@ class ClientDocumentForm extends Component
 
     public function mount($clientId, $documentId = null)
     {
-        $this->clientId = $clientId;
-        $this->client = Client::findOrFail($clientId);
+        Log::info('ClientDocumentForm::mount - Starting mount', [
+            'clientId' => $clientId,
+            'documentId' => $documentId
+        ]);
 
-        if ($documentId) {
-            $this->documentId = $documentId;
-            $this->editMode = true;
-            $this->loadDocument();
+        try {
+            if (!$clientId) {
+                throw new \Exception('Client ID is required');
+            }
+
+            $this->clientId = $clientId;
+            $this->client = Client::findOrFail($clientId);
+
+            Log::info('ClientDocumentForm::mount - Client loaded', [
+                'client_id' => $this->client->id,
+                'client_name' => $this->client->full_name
+            ]);
+
+            if ($documentId) {
+                $this->documentId = $documentId;
+                $this->editMode = true;
+                $this->loadDocument();
+            }
+
+        } catch (\Exception $e) {
+            Log::error('ClientDocumentForm::mount - Error', [
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
+            throw $e;
         }
     }
-
     private function loadDocument()
     {
-        $document = ClientDocument::with('documentType')->findOrFail($this->documentId);
+        Log::info('ClientDocumentForm::loadDocument - Loading document', [
+            'documentId' => $this->documentId
+        ]);
 
-        $this->document_type_id = $document->document_type_id;
-        $this->document_number = $document->document_number;
-        $this->verification_digit = $document->verification_digit;
-        $this->expiration_date = $document->expiration_date ? $document->expiration_date->format('Y-m-d') : null;
-        $this->is_primary = $document->is_primary;
+        try {
+            $document = ClientDocument::with('documentType')->findOrFail($this->documentId);
 
-        $this->selectedDocumentType = $document->documentType;
+            $this->document_type_id = $document->document_type_id;
+            $this->document_number = $document->document_number;
+            $this->verification_digit = $document->verification_digit;
+            $this->expiration_date = $document->expiration_date ? $document->expiration_date->format('Y-m-d') : null;
+            $this->is_primary = $document->is_primary;
+            $this->selectedDocumentType = $document->documentType;
+
+            Log::info('ClientDocumentForm::loadDocument - Document loaded', [
+                'document' => $document->toArray()
+            ]);
+        } catch (\Exception $e) {
+            Log::error('ClientDocumentForm::loadDocument - Error', [
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
+            throw $e;
+        }
+
     }
 
     public function updatedDocumentTypeId()
@@ -64,10 +102,33 @@ class ClientDocumentForm extends Component
 
     protected function getBaseBreadcrumbs()
     {
+        Log::info('ClientDocumentForm::getBaseBreadcrumbs - Validating client data', [
+            'clientId' => $this->clientId,
+            'client_properties' => [
+                'id' => $this->client->id ?? null,
+                'full_name' => $this->client->full_name ?? null
+            ]
+        ]);
+
+        $clientParams = ['clientId' => $this->client->id];
+
+        Log::info('ClientDocumentForm::getBaseBreadcrumbs - Route params', [
+            'params' => $clientParams
+        ]);
+
         return [
-            ['name' => 'Clientes', 'route' => 'clients.index'],
-            ['name' => $this->client->full_name, 'route' => 'clients.show', 'params' => ['clientId' => $this->clientId]],
-            ['name' => $this->editMode ? 'Editar Documento' : 'Nuevo Documento']
+            [
+                'name' => 'Clientes',
+                'route' => 'clients.index'
+            ],
+            [
+                'name' => $this->client->full_name ?? 'Cliente',
+                'route' => 'clients.show',
+                'params' => $clientParams // Asegurarnos de que este objeto contiene exactamente lo que la ruta espera
+            ],
+            [
+                'name' => $this->editMode ? 'Editar Documento' : 'Nuevo Documento'
+            ]
         ];
     }
 
@@ -90,6 +151,16 @@ class ClientDocumentForm extends Component
 
     public function store()
     {
+
+        Log::info('ClientDocumentForm::store - Starting store process', [
+            'clientId' => $this->clientId,
+            'document_data' => [
+                'document_type_id' => $this->document_type_id,
+                'document_number' => $this->document_number,
+                'is_primary' => $this->is_primary
+            ]
+        ]);
+
         $this->validate([
             'document_type_id' => 'required|exists:document_types,id',
             'document_number' => [
@@ -113,9 +184,11 @@ class ClientDocumentForm extends Component
                 'string',
                 'max:2',
                 function ($attribute, $value, $fail) {
-                    if ($this->selectedDocumentType &&
+                    if (
+                        $this->selectedDocumentType &&
                         $this->selectedDocumentType->requires_verification_digit &&
-                        empty($value)) {
+                        empty($value)
+                    ) {
                         $fail('El dígito verificador es requerido para este tipo de documento.');
                     }
                 },
@@ -176,9 +249,11 @@ class ClientDocumentForm extends Component
                 'string',
                 'max:2',
                 function ($attribute, $value, $fail) {
-                    if ($this->selectedDocumentType &&
+                    if (
+                        $this->selectedDocumentType &&
                         $this->selectedDocumentType->requires_verification_digit &&
-                        empty($value)) {
+                        empty($value)
+                    ) {
                         $fail('El dígito verificador es requerido para este tipo de documento.');
                     }
                 },
@@ -225,6 +300,13 @@ class ClientDocumentForm extends Component
 
     public function render()
     {
+
+        Log::info('ClientDocumentForm::render', [
+            'clientId' => $this->clientId,
+            'documentTypes' => DocumentType::count(),
+            'hasClient' => isset($this->client)
+        ]);
+
         return view('livewire.client-document-form', [
             'documentTypes' => DocumentType::orderBy('name')->get(),
             'breadcrumbs' => $this->getBaseBreadcrumbs()

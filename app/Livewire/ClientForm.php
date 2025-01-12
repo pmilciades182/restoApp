@@ -49,6 +49,7 @@ class ClientForm extends Component
 
     public $parent_breadcrumbs;
 
+
     public function updatedClientType($value)
     {
         // Limpiar campos según el tipo de cliente
