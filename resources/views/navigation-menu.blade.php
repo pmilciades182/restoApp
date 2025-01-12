@@ -48,15 +48,17 @@
                                     Categorías
                                 </a>
 
-                                <a href="{{ route('categories.index') }}"
-                                    class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 {{ request()->routeIs('categories.*') ? 'bg-gray-100' : '' }}">
-                                    Categorías
+                                <a href="{{ route('clients.index') }}"
+                                    class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 {{ request()->routeIs('clients.*') ? 'bg-gray-100' : '' }}">
+                                    Clientes
                                 </a>
 
-                                <a href="{{ route('categories.index') }}"
-                                    class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 {{ request()->routeIs('categories.*') ? 'bg-gray-100' : '' }}">
-                                    Categorías
+                                <a href="{{ route('document-types.index') }}"
+                                    class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 {{ request()->routeIs('document-types.*') ? 'bg-gray-100' : '' }}">
+                                    Documentos
                                 </a>
+
+
                                 <!-- Espacio para más items del menú -->
 
                             </div>

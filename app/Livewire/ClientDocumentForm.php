@@ -2,12 +2,12 @@
 
 namespace App\Livewire;
 
-use Livewire\Component;
 use App\Models\Client;
 use App\Models\ClientDocument;
 use App\Models\DocumentType;
 use App\Traits\HasBreadcrumbs;
 use Illuminate\Support\Facades\DB;
+use Livewire\Component;
 
 class ClientDocumentForm extends Component
 {
@@ -27,11 +27,6 @@ class ClientDocumentForm extends Component
     public $client;
     public $selectedDocumentType;
 
-    // Escuchadores de eventos
-    protected $listeners = [
-        'refreshComponent' => '$refresh'
-    ];
-
     public function mount($clientId, $documentId = null)
     {
         $this->clientId = $clientId;
@@ -44,7 +39,7 @@ class ClientDocumentForm extends Component
         }
     }
 
-    public function loadDocument()
+    private function loadDocument()
     {
         $document = ClientDocument::with('documentType')->findOrFail($this->documentId);
 
@@ -71,7 +66,7 @@ class ClientDocumentForm extends Component
     {
         return [
             ['name' => 'Clientes', 'route' => 'clients.index'],
-            ['name' => $this->client->full_name, 'route' => 'clients.show', 'params' => ['clientId' => $this->client->id]],
+            ['name' => $this->client->full_name, 'route' => 'clients.show', 'params' => ['clientId' => $this->clientId]],
             ['name' => $this->editMode ? 'Editar Documento' : 'Nuevo Documento']
         ];
     }
@@ -80,13 +75,13 @@ class ClientDocumentForm extends Component
     {
         $breadcrumbs = [
             ['name' => 'Clientes', 'route' => 'clients.index'],
-            ['name' => $this->client->full_name],
+            ['name' => $this->client->full_name, 'route' => 'clients.show', 'params' => ['clientId' => $this->clientId]],
             ['name' => $this->editMode ? 'Editar Documento' : 'Nuevo Documento']
         ];
 
         $encodedBreadcrumbs = base64_encode(json_encode($breadcrumbs));
 
-        return response()->redirectToRoute('document-types.create', [
+        return redirect()->route('document-types.create', [
             'redirect_to' => 'client-document',
             'parent_breadcrumbs' => $encodedBreadcrumbs,
             'clientId' => $this->clientId
@@ -138,7 +133,7 @@ class ClientDocumentForm extends Component
             }
 
             // Crear el nuevo documento
-            $document = $this->client->documents()->create([
+            $this->client->documents()->create([
                 'document_type_id' => $this->document_type_id,
                 'document_number' => $this->document_number,
                 'verification_digit' => $this->verification_digit,
@@ -165,7 +160,6 @@ class ClientDocumentForm extends Component
                 'string',
                 'max:50',
                 function ($attribute, $value, $fail) {
-                    // Verificar duplicados excluyendo el documento actual
                     $exists = ClientDocument::where('document_type_id', $this->document_type_id)
                         ->where('document_number', $value)
                         ->where('client_id', '!=', $this->clientId)

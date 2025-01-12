@@ -44,7 +44,21 @@ class ClientForm extends Component
     // Control
     public $clientId;
     public $editMode = false;
+
+    public $selectedDocumentType = null;
+
     public $parent_breadcrumbs;
+
+    public function updatedClientType($value)
+    {
+        // Limpiar campos según el tipo de cliente
+        if ($value === 'business') {
+            $this->first_name = '';
+            $this->last_name = '';
+        } else {
+            $this->business_name = '';
+        }
+    }
 
     public function mount($clientId = null, $parent_breadcrumbs = null)
     {
@@ -54,6 +68,11 @@ class ClientForm extends Component
             $this->clientId = $clientId;
             $this->editMode = true;
             $this->loadClient();
+
+            // Cargar el tipo de documento al montar el componente si hay un documento seleccionado
+            if ($this->document_type_id) {
+                $this->selectedDocumentType = DocumentType::find($this->document_type_id);
+            }
         }
     }
 
