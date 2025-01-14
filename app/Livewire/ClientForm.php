@@ -7,6 +7,7 @@ use App\Models\Client;
 use App\Models\DocumentType;
 use App\Traits\HasBreadcrumbs;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 
 class ClientForm extends Component
 {
@@ -49,6 +50,8 @@ class ClientForm extends Component
 
     public $parent_breadcrumbs;
 
+    public $redirect_to = null;
+    public $decodedBreadcrumbs = null;
 
     public function updatedClientType($value)
     {
@@ -61,16 +64,29 @@ class ClientForm extends Component
         }
     }
 
-    public function mount($clientId = null, $parent_breadcrumbs = null)
+    public function mount($clientId = null, $parent_breadcrumbs = null, $redirect_to = null)
     {
-        $this->parent_breadcrumbs = $parent_breadcrumbs;
+        \Log::info('ClientForm::mount', [
+            'redirect_to_param' => $redirect_to,
+            'other_params' => [
+                'clientId' => $clientId,
+                'has_parent_breadcrumbs' => !empty($parent_breadcrumbs)
+            ]
+        ]);
+
+        $this->redirect_to = $redirect_to;
+        $this->parent_breadcrumbs = $parent_breadcrumbs ?? request()->get('parent_breadcrumbs');
+
+
+        \Log::info('ClientForm::mount - After assignment', [
+            'this_redirect_to' => $this->redirect_to
+        ]);
 
         if ($clientId) {
             $this->clientId = $clientId;
             $this->editMode = true;
             $this->loadClient();
 
-            // Cargar el tipo de documento al montar el componente si hay un documento seleccionado
             if ($this->document_type_id) {
                 $this->selectedDocumentType = DocumentType::find($this->document_type_id);
             }
@@ -115,14 +131,27 @@ class ClientForm extends Component
 
     protected function getBaseBreadcrumbs()
     {
-        $parentBreadcrumbs = $this->decodeBreadcrumbs($this->parent_breadcrumbs);
+        if ($this->redirect_to === 'invoice' && $this->parent_breadcrumbs) {
+            try {
+                $decoded = base64_decode($this->parent_breadcrumbs);
+                $parentBreadcrumbs = json_decode($decoded, true);
 
-        $baseBreadcrumbs = [
+                if (json_last_error() === JSON_ERROR_NONE) {
+                    return array_merge($parentBreadcrumbs, [
+                        ['name' => 'Nuevo Cliente']
+                    ]);
+                }
+            } catch (\Exception $e) {
+                Log::error('ClientForm::getBaseBreadcrumbs - Error processing breadcrumbs', [
+                    'error' => $e->getMessage()
+                ]);
+            }
+        }
+
+        return [
             ['name' => 'Clientes', 'route' => 'clients.index'],
             ['name' => $this->editMode ? 'Editar Cliente' : 'Nuevo Cliente']
         ];
-
-        return $parentBreadcrumbs ? array_merge($parentBreadcrumbs, $baseBreadcrumbs) : $baseBreadcrumbs;
     }
 
     public function addDocumentType()
@@ -195,6 +224,15 @@ class ClientForm extends Component
 
             DB::commit();
             session()->flash('message', 'Cliente creado exitosamente.');
+
+            // Verificar si viene de la factura
+            if ($this->redirect_to === 'invoice') {
+                // Emitir evento para actualizar la factura con el nuevo cliente
+                $this->dispatch('clientAdded', $client->id);
+                return redirect()->route('invoices.create');
+            }
+
+
             return redirect()->route('clients.index');
 
         } catch (\Exception $e) {
@@ -272,9 +310,21 @@ class ClientForm extends Component
 
     public function cancel()
     {
+        \Log::info('ClientForm::cancel', [
+            'redirect_to' => $this->redirect_to,
+            'type' => gettype($this->redirect_to),
+            'comparison' => $this->redirect_to === 'invoice'
+        ]);
+
+        // Verificar si viene de la factura
+        if ($this->redirect_to === 'invoice') {
+            \Log::info('ClientForm::cancel - Redirecting to invoices.create');
+            return redirect()->route('invoices.create');
+        }
+
+        \Log::info('ClientForm::cancel - Redirecting to clients.index');
         return redirect()->route('clients.index');
     }
-
     public function render()
     {
         return view('livewire.client-form', [

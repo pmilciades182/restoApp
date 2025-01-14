@@ -40,6 +40,38 @@ class InvoiceForm extends Component
 
     protected $listeners = ['focusBarcode'];
 
+
+    public function handleClientAdded($clientId)
+    {
+        // Cargar el nuevo cliente y establecerlo como seleccionado
+        $this->client = Client::findOrFail($clientId);
+        $this->client_id = $clientId;
+
+        // Si el cliente tiene documento principal, establecerlo
+        if ($primaryDoc = $this->client->primaryDocument) {
+            $this->document_number = $primaryDoc->document_number;
+            $this->selected_document_type = $primaryDoc->documentType->name;
+        }
+
+        $this->available_documents = [];
+        session()->flash('message', 'Cliente agregado exitosamente.');
+    }
+
+
+    public function addClient()
+    {
+        $breadcrumbs = [
+            ['name' => 'Facturas', 'route' => 'invoices.index'],
+            ['name' => $this->editMode ? 'Editar Factura' : 'Nueva Factura']
+        ];
+
+        $encodedBreadcrumbs = base64_encode(json_encode($breadcrumbs));
+
+        return response()->redirectToRoute('clients.create', [
+            'redirect_to' => 'invoice',
+            'parent_breadcrumbs' => $encodedBreadcrumbs
+        ]);
+    }
     protected function rules()
     {
         return [

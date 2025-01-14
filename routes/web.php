@@ -63,6 +63,7 @@ Route::middleware([
     // Clients routes
     Route::get('/clients', ClientTable::class)->name('clients.index');
     Route::get('/clients/create', ClientForm::class)->name('clients.create');
+    Route::get('/clients/create/{redirect_to?}', ClientForm::class)->name('clients.create');
     Route::get('/clients/{clientId}', ClientShow::class)->name('clients.show');
     Route::get('/clients/{clientId}/edit', ClientForm::class)->name('clients.edit');
 
