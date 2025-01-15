@@ -105,8 +105,8 @@ class InvoiceForm extends Component
         if (strlen($this->document_number) >= 3) {
             \Log::info('Searching for documents');
 
-            $documents = ClientDocument::where('document_number', 'like', '%' . $this->document_number . '%')
-                ->with(['client', 'documentType'])
+            $documents = ClientDocument::where('document_number', 'like', $this->document_number . '%')
+                ->with(['client', 'documentType'])  // Cargar explícitamente la relación client
                 ->get();
 
             \Log::info('Found documents', [
@@ -120,7 +120,7 @@ class InvoiceForm extends Component
                     'document_type' => $doc->documentType->name,
                     'document_number' => $doc->document_number,
                     'client_id' => $doc->client_id,
-                    'client_name' => $doc->client->full_name
+                    'client_name' => $doc->client ? $doc->client->full_name : 'Cliente no disponible'
                 ];
             })->toArray();
 
@@ -365,11 +365,47 @@ class InvoiceForm extends Component
 
     public function store()
     {
-        $this->validate();
-
         try {
+            // Mensajes de validación personalizados
+            $messages = [
+                'client_id.required' => 'Debe seleccionar un cliente para crear la factura.',
+                'client_id.exists' => 'El cliente seleccionado no es válido.',
+                'invoice_date.required' => 'La fecha de factura es obligatoria.',
+                'invoice_date.date' => 'La fecha de factura no es válida.',
+                'items.required' => 'Debe agregar al menos un producto a la factura.',
+                'items.min' => 'Debe agregar al menos un producto a la factura.',
+                'items.*.product_id.required' => 'Todos los productos deben ser válidos.',
+                'items.*.product_id.exists' => 'Uno o más productos seleccionados no son válidos.',
+                'items.*.quantity.required' => 'La cantidad es requerida para todos los productos.',
+                'items.*.quantity.numeric' => 'La cantidad debe ser un número.',
+                'items.*.quantity.min' => 'La cantidad debe ser mayor a 0.',
+            ];
+
+            // Validación inicial
+            $this->validate([
+                'client_id' => 'required|exists:clients,id',
+                'invoice_date' => 'required|date',
+                'items' => 'required|array|min:1',
+                'items.*.product_id' => 'required|exists:products,id',
+                'items.*.quantity' => 'required|numeric|min:1',
+            ], $messages);
+
+
+            // Verificación adicional de existencia de productos y stock
+            foreach ($this->items as $item) {
+                $product = Product::find($item['product_id']);
+                if (!$product) {
+                    throw new \Exception("El producto seleccionado no existe.");
+                }
+
+                if ($product->stock < $item['quantity']) {
+                    throw new \Exception("Stock insuficiente para el producto: {$product->name}");
+                }
+            }
+
             DB::beginTransaction();
 
+            // Crear la factura
             $invoice = Invoice::create([
                 'client_id' => $this->client_id,
                 'invoice_number' => $this->generateInvoiceNumber(),
@@ -381,6 +417,7 @@ class InvoiceForm extends Component
                 'created_by' => auth()->id()
             ]);
 
+            // Crear los detalles
             foreach ($this->items as $item) {
                 $invoice->details()->create([
                     'product_id' => $item['product_id'],
@@ -391,17 +428,39 @@ class InvoiceForm extends Component
                     'total' => $item['subtotal'] * 1.10,
                     'created_by' => auth()->id()
                 ]);
+
+                // Actualizar el stock del producto
+                $product = Product::find($item['product_id']);
+                $product->decrement('stock', $item['quantity']);
             }
 
             DB::commit();
-            session()->flash('message', 'Factura creada exitosamente.');
-            return redirect()->route('invoices.index');
 
+            // Limpiar el formulario
+            $this->reset(['items', 'client_id', 'client', 'document_number', 'selected_document_type']);
+            $this->calculateTotals();
+
+
+            session()->flash('message', 'Factura creada exitosamente.');
+
+            // Redirigir a la vista de detalle de la factura
+            return redirect()->route('invoices.show', ['invoiceId' => $invoice->id]);
+
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            DB::rollBack();
+            throw $e;
         } catch (\Exception $e) {
             DB::rollBack();
+            // Log del error para debugging
+            \Log::error('Error al crear factura:', [
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
             session()->flash('error', 'Error al crear la factura: ' . $e->getMessage());
+            return null;
         }
     }
+
 
     public function update()
     {

@@ -55,10 +55,35 @@ class InvoiceShow extends Component
 
     public function printInvoice()
     {
-        Log::info('Printing invoice', [
-            'invoice_id' => $this->invoiceId
-        ]);
-        $this->dispatch('print-invoice');
+        try {
+            \Log::info('Iniciando impresión de ticket', [
+                'invoice_id' => $this->invoice->id,
+                'invoice_number' => $this->invoice->invoice_number
+            ]);
+
+            // Verificar que tenemos todos los datos necesarios
+            if (!$this->invoice || !$this->client || !$this->details) {
+                \Log::error('Faltan datos necesarios para la impresión', [
+                    'has_invoice' => isset($this->invoice),
+                    'has_client' => isset($this->client),
+                    'details_count' => $this->details ? $this->details->count() : 0
+                ]);
+                return;
+            }
+
+            \Log::info('Emitiendo evento print-ticket');
+            $this->dispatch('print-ticket');
+
+            \Log::info('Evento print-ticket emitido');
+            return;
+
+        } catch (\Exception $e) {
+            \Log::error('Error al imprimir ticket', [
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
+            throw $e;
+        }
     }
 
     public function cancelInvoice()
@@ -125,7 +150,7 @@ class InvoiceShow extends Component
 
     public function getStatusBadgeClassesProperty()
     {
-        return match($this->invoice->status) {
+        return match ($this->invoice->status) {
             'paid' => 'bg-green-100 text-green-800',
             'pending' => 'bg-yellow-100 text-yellow-800',
             'cancelled' => 'bg-red-100 text-red-800',
@@ -135,7 +160,7 @@ class InvoiceShow extends Component
 
     public function getStatusTextProperty()
     {
-        return match($this->invoice->status) {
+        return match ($this->invoice->status) {
             'paid' => 'Pagada',
             'pending' => 'Pendiente',
             'cancelled' => 'Cancelada',

@@ -139,22 +139,25 @@ class InvoiceTable extends Component
 
     public function render()
     {
+        $invoices = Invoice::with('client') // Asegura cargar la relación client
+            ->when($this->filterDateFrom, function ($query) {
+                $query->whereDate('created_at', '>=', $this->filterDateFrom);
+            })
+            ->when($this->filterDateTo, function ($query) {
+                $query->whereDate('created_at', '<=', $this->filterDateTo);
+            })
+            ->orderBy('created_at', 'desc')
+            ->paginate(10);
+
         return view('livewire.invoice.invoice-table', [
-            'invoices' => $this->invoices,
-            'totalSales' => $this->totalSales,
-            'paymentMethods' => [
-                'cash' => 'Efectivo',
-                'card' => 'Tarjeta',
-                'transfer' => 'Transferencia',
-                'other' => 'Otro'
-            ],
+            'invoices' => $invoices,
             'statuses' => [
                 'pending' => 'Pendiente',
                 'paid' => 'Pagado',
                 'cancelled' => 'Cancelado',
                 'void' => 'Anulado'
             ],
-            'breadcrumbs' => $this->getBaseBreadcrumbs()
+            'breadcrumbs' => [['name' => 'Facturas']]
         ])->layout('layouts.app');
     }
 }

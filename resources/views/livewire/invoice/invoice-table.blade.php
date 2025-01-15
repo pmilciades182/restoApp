@@ -67,7 +67,7 @@
                                             {{ $invoice->invoice_number }}
                                         </div>
                                         <div class="text-sm text-gray-500">
-                                            {{ $invoice->client->full_name }}
+                                            {{ $invoice->client?->full_name ?? 'Cliente no disponible' }}
                                         </div>
                                     </td>
                                     <td class="px-6 py-4">
