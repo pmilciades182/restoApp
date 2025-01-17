@@ -230,7 +230,7 @@
                         {{ Str::limit($detail->product->name, 20) }}
                         <div class="flex justify-between">
                             <span>{{ $detail->quantity }} x
-                               Gs. {{ number_format($detail->unit_price, 0, ',', '.') }}</span>
+                                Gs. {{ number_format($detail->unit_price, 0, ',', '.') }}</span>
                             <span> Gs. {{ number_format($detail->subtotal, 0, ',', '.') }}</span>
                         </div>
                     </div>
@@ -274,6 +274,15 @@
             @page {
                 margin: 0;
                 size: 80mm auto;
+            }
+
+            html,
+            body {
+                margin: 0 !important;
+                padding: 0 !important;
+                width: 80mm;
+                min-height: 0 !important;
+                height: auto !important;
             }
 
             /* Debug con outline */
