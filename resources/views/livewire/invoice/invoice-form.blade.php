@@ -183,14 +183,8 @@
 
                 <div class="mt-4 flex justify-end">
                     <div>
-                        <div class="flex justify-between">
-                            <span class="font-bold">Subtotal:</span>
-                            <span>Gs. {{ number_format($subtotal, 0, ',', '.') }}</span>
-                        </div>
-                        <div class="flex justify-between">
-                            <span class="font-bold">IVA (10%):</span>
-                            <span>Gs. {{ number_format($tax, 0, ',', '.') }}</span>
-                        </div>
+
+
                         <div class="flex justify-between text-lg font-bold">
                             <span>Total:</span>
                             <span>Gs. {{ number_format($total, 0, ',', '.') }}</span>

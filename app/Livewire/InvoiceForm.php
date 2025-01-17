@@ -231,7 +231,7 @@ class InvoiceForm extends Component
                 ]);
             }
 
-            $this->calculateTotals();
+            $this->calculateTotal();
 
         } catch (\Exception $e) {
             \Log::error('Error in addProductToList', [
@@ -240,6 +240,7 @@ class InvoiceForm extends Component
             ]);
         }
     }
+
     // Mantener el foco en el input de código de barras
     public function focusBarcode()
     {
@@ -349,9 +350,7 @@ class InvoiceForm extends Component
 
     private function calculateTotals()
     {
-        $this->subtotal = collect($this->items)->sum('subtotal');
-        $this->tax = $this->subtotal * 0.10; // IVA 10%
-        $this->total = $this->subtotal + $this->tax;
+        $this->total = collect($this->items)->sum('subtotal');
     }
 
     public function updateQuantity($index, $newQuantity)
@@ -359,9 +358,15 @@ class InvoiceForm extends Component
         if ($newQuantity > 0) {
             $this->items[$index]['quantity'] = $newQuantity;
             $this->items[$index]['subtotal'] = $this->items[$index]['price'] * $newQuantity;
-            $this->calculateTotals();
+            $this->calculateTotal();
         }
     }
+
+    private function calculateTotal()
+    {
+        $this->total = collect($this->items)->sum('subtotal');
+    }
+
 
     public function store()
     {
@@ -410,8 +415,8 @@ class InvoiceForm extends Component
                 'client_id' => $this->client_id,
                 'invoice_number' => $this->generateInvoiceNumber(),
                 'invoice_type' => 'standard',
-                'subtotal' => $this->subtotal,
-                'tax' => $this->tax,
+                'subtotal' => $this->total,
+                'tax' => 0,
                 'total' => $this->total,
                 'status' => 'pending',
                 'created_by' => auth()->id()
@@ -424,8 +429,8 @@ class InvoiceForm extends Component
                     'quantity' => $item['quantity'],
                     'unit_price' => $item['price'],
                     'subtotal' => $item['subtotal'],
-                    'tax' => $item['subtotal'] * 0.10,
-                    'total' => $item['subtotal'] * 1.10,
+                    'tax' => 0,
+                    'total' => $item['subtotal'] ,
                     'created_by' => auth()->id()
                 ]);
 
@@ -477,8 +482,8 @@ class InvoiceForm extends Component
 
             $invoice->update([
                 'client_id' => $this->client_id,
-                'subtotal' => $this->subtotal,
-                'tax' => $this->tax,
+                'subtotal' => $this->total,
+                'tax' => 0,
                 'total' => $this->total,
                 'updated_by' => auth()->id()
             ]);
@@ -493,8 +498,8 @@ class InvoiceForm extends Component
                     'quantity' => $item['quantity'],
                     'unit_price' => $item['price'],
                     'subtotal' => $item['subtotal'],
-                    'tax' => $item['subtotal'] * 0.10,
-                    'total' => $item['subtotal'] * 1.10,
+                    'tax' => 0,
+                    'total' => $item['subtotal'] ,
                     'created_by' => auth()->id()
                 ]);
             }

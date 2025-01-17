@@ -175,16 +175,8 @@
                     <div class="border-t border-gray-200 px-4 py-5 sm:px-6">
                         <div class="flex justify-end">
                             <div class="w-64 space-y-3">
-                                <div class="flex justify-between text-sm">
-                                    <span class="font-medium text-gray-500">Subtotal:</span>
-                                    <span class="text-gray-900">Gs.
-                                        {{ number_format($invoice->subtotal, 0, ',', '.') }}</span>
-                                </div>
-                                <div class="flex justify-between text-sm">
-                                    <span class="font-medium text-gray-500">IVA (10%):</span>
-                                    <span class="text-gray-900">Gs.
-                                        {{ number_format($invoice->tax, 0, ',', '.') }}</span>
-                                </div>
+
+
                                 <div class="flex justify-between text-base pt-3 border-t border-gray-200">
                                     <span class="font-bold text-gray-900">Total:</span>
                                     <span class="font-bold text-gray-900">Gs.
@@ -216,9 +208,8 @@
         <div class="ticket text-xs" style="width: 80mm; font-family: monospace;">
             <!-- Header -->
             <div class="text-center mb-2">
-                <div class="font-bold">FARMACIA EJEMPLO S.A.</div>
-                <div>RUC: 80099999-1</div>
-                <div>Tel: (021) 999-999</div>
+                <div class="font-bold">POSADA JASY ROGA</div>
+                <div>Tel: (0981) 492-041</div>
             </div>
 
             <!-- Datos de la factura -->
@@ -239,8 +230,8 @@
                         {{ Str::limit($detail->product->name, 20) }}
                         <div class="flex justify-between">
                             <span>{{ $detail->quantity }} x
-                                {{ number_format($detail->unit_price, 0, ',', '.') }}</span>
-                            <span>{{ number_format($detail->subtotal, 0, ',', '.') }}</span>
+                               Gs. {{ number_format($detail->unit_price, 0, ',', '.') }}</span>
+                            <span> Gs. {{ number_format($detail->subtotal, 0, ',', '.') }}</span>
                         </div>
                     </div>
                 @endforeach
@@ -251,24 +242,16 @@
 
             <!-- Totales -->
             <div class="mb-2">
-                <div class="flex justify-between">
-                    <span>SUBTOTAL:</span>
-                    <span>{{ number_format($invoice->subtotal, 0, ',', '.') }}</span>
-                </div>
-                <div class="flex justify-between">
-                    <span>IVA (10%):</span>
-                    <span>{{ number_format($invoice->tax, 0, ',', '.') }}</span>
-                </div>
                 <div class="flex justify-between font-bold">
                     <span>TOTAL:</span>
-                    <span>{{ number_format($invoice->total, 0, ',', '.') }}</span>
+                    <span>Gs. {{ number_format($invoice->total, 0, ',', '.') }}</span>
                 </div>
             </div>
 
             <!-- Footer -->
             <div class="text-center mt-2">
                 <div>¡Gracias por su preferencia!</div>
-                <div>www.farmaciaejemplo.com.py</div>
+                <div>IG: @posadajasyroga</div>
                 <div>Ticket no válido como factura</div>
             </div>
         </div>
@@ -282,15 +265,20 @@
             display: none !important;
         }
 
-        .oculto{
-                display: none;
-            }
+        .oculto {
+            display: none;
+        }
 
         @media print {
 
+            @page {
+                margin: 0;
+                size: 80mm auto;
+            }
+
             /* Debug con outline */
             #ticket-print {
-                outline: 2px solid red;
+
                 /* Para debug visual */
                 display: block !important;
                 visibility: visible !important;
@@ -321,8 +309,8 @@
                 width: 80mm !important;
                 padding: 5mm !important;
                 font-family: monospace !important;
-                font-size: 12px !important;
-                line-height: 1.2 !important;
+                font-size: 15px !important;
+                line-height: 1 !important;
             }
 
             /* Remover márgenes de título y hora */

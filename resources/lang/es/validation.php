@@ -1,4 +1,3 @@
-// resources/lang/es/validation.php
 <?php
 
 return [
@@ -79,6 +78,7 @@ return [
     'uploaded' => 'El campo :attribute no se pudo subir.',
     'url' => 'El formato del campo :attribute no es válido.',
     'uuid' => 'El campo :attribute debe ser un UUID válido.',
+
     'attributes' => [
         'name' => 'nombre',
         'description' => 'descripción',
