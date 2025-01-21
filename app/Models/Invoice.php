@@ -12,6 +12,7 @@ class Invoice extends Model
 
     protected $fillable = [
         'client_id',
+        'cash_register_id',
         'invoice_number',
         'invoice_type',
         'subtotal',
@@ -27,7 +28,10 @@ class Invoice extends Model
         'cancelled_at',
         'cancelled_reason',
         'created_by',
-        'updated_by'
+        'updated_by',
+        'payment_status',
+        'amount_paid',
+        'balance'
     ];
 
     protected $casts = [
@@ -35,10 +39,11 @@ class Invoice extends Model
         'tax' => 'decimal:2',
         'total' => 'decimal:2',
         'discount' => 'decimal:2',
+        'amount_paid' => 'decimal:2',
+        'balance' => 'decimal:2',
         'paid_at' => 'datetime',
         'cancelled_at' => 'datetime',
     ];
-
     // Relación con el cliente
     public function client()
     {
@@ -106,4 +111,18 @@ class Invoice extends Model
         $this->cancelled_reason = $reason;
         $this->save();
     }
+
+
+    public function payments()
+    {
+        return $this->hasMany(InvoicePayment::class);
+    }
+
+      // Nueva relación con la caja
+      public function cashRegister()
+      {
+          return $this->belongsTo(CashRegister::class);
+      }
+
+
 }

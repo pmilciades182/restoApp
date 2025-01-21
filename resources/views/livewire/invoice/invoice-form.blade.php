@@ -109,6 +109,13 @@
                     </div>
                 </div>
             @endif
+
+            @if (session('error'))
+                <div class="alert alert-danger">
+                    {{ session('error') }}
+                </div>
+            @endif
+
             <div class="bg-white rounded-lg shadow p-4">
                 <h3 class="text-lg font-medium text-gray-900 mb-3">Productos</h3>
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-3">
@@ -191,6 +198,116 @@
                         </div>
                     </div>
                 </div>
+
+
+                <!-- Sección de Pagos Múltiples -->
+                <div class="mt-8 bg-gray-50 p-4 rounded-lg">
+                    <div class="flex justify-between items-center mb-4">
+                        <h3 class="text-lg font-medium text-gray-900">Formas de Pago</h3>
+                        <button wire:click="addPaymentMethod"
+                            class="px-3 py-2 text-sm font-medium text-white bg-indigo-600 rounded-md hover:bg-indigo-700"
+                            {{ $remainingBalance <= 0 ? 'disabled' : '' }}>
+                            <svg class="inline-block w-4 h-4 mr-1" fill="none" stroke="currentColor"
+                                viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M12 4v16m8-8H4" />
+                            </svg>
+                            Agregar Forma de Pago
+                        </button>
+                    </div>
+
+                    <!-- Lista de Pagos -->
+                    <div class="space-y-4">
+                        @foreach ($paymentMethods as $index => $payment)
+                            <div class="bg-white p-4 rounded-lg shadow">
+                                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                    <!-- Método de Pago -->
+                                    <div>
+                                        <label class="block text-sm font-medium text-gray-700">Método de Pago</label>
+                                        <select wire:model.live="paymentMethods.{{ $index }}.method"
+                                            class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
+                                            <option value="cash">Efectivo</option>
+                                            <option value="credit_card">Tarjeta de Crédito</option>
+                                            <option value="debit_card">Tarjeta de Débito</option>
+                                            <option value="transfer">Transferencia</option>
+                                        </select>
+                                    </div>
+
+                                    <!-- Monto -->
+                                    <div>
+                                        <label class="block text-sm font-medium text-gray-700">
+                                            {{ $payment['method'] === 'cash' ? 'Monto Recibido' : 'Monto a Pagar' }}
+                                        </label>
+                                        <input type="number"
+                                            wire:model.live="paymentMethods.{{ $index }}.amount"
+                                            class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                                            min="0"
+                                            max="{{ $payment['method'] === 'cash' ? '' : $remainingBalance }}">
+                                    </div>
+
+                                    <!-- Referencia (para pagos que no son en efectivo) -->
+                                    @if ($payment['method'] !== 'cash')
+                                        <div>
+                                            <label class="block text-sm font-medium text-gray-700">Número de
+                                                Referencia</label>
+                                            <input type="text"
+                                                wire:model="paymentMethods.{{ $index }}.reference"
+                                                class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
+                                        </div>
+                                    @endif
+
+                                    <!-- Botón de Eliminar -->
+                                    <div class="flex items-center">
+                                        <button wire:click="removePaymentMethod({{ $index }})"
+                                            class="text-red-600 hover:text-red-900">
+                                            <svg class="h-5 w-5" fill="none" stroke="currentColor"
+                                                viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                    d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                            </svg>
+                                        </button>
+                                    </div>
+                                </div>
+
+                                <!-- Mostrar vuelto solo para efectivo -->
+                                @if ($payment['method'] === 'cash' && $payment['amount'] > 0)
+                                    <div class="mt-2 text-right text-sm">
+                                        <span class="text-gray-600">Vuelto:</span>
+                                        <span
+                                            class="ml-2 font-medium {{ $this->getChange($index) >= 0 ? 'text-green-600' : 'text-red-600' }}">
+                                            Gs. {{ number_format($this->getChange($index), 0, ',', '.') }}
+                                        </span>
+                                    </div>
+                                @endif
+                            </div>
+                        @endforeach
+                    </div>
+
+                    <!-- Resumen de Pagos -->
+                    <div class="mt-6 bg-white p-4 rounded-lg shadow">
+                        <h4 class="text-lg font-medium text-gray-900 mb-3">Resumen de Pagos</h4>
+                        <div class="space-y-2">
+                            <div class="grid grid-cols-2 gap-4">
+                                <span class="text-gray-600">Total a Pagar:</span>
+                                <span class="text-right font-medium">Gs.
+                                    {{ number_format($total, 0, ',', '.') }}</span>
+
+                                <span class="text-gray-600">Total Pagado:</span>
+                                <span class="text-right font-medium">Gs.
+                                    {{ number_format($this->totalPaid, 0, ',', '.') }}</span>
+
+                                <span class="text-gray-600">Saldo Pendiente:</span>
+                                <span
+                                    class="text-right font-bold {{ $remainingBalance <= 0 ? 'text-green-600' : 'text-red-600' }}">
+                                    Gs. {{ number_format($remainingBalance, 0, ',', '.') }}
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+
+
             </div>
         </div>
     </div>

@@ -18,11 +18,14 @@ use App\Livewire\InvoiceShow;
 use App\Livewire\PointOfSale;
 use App\Livewire\KitchenDisplay;
 use App\Livewire\TableManagement;
+use App\Livewire\CashRegisterManagement;
+use App\Livewire\CashRegisterTable;
 use App\Livewire\TableMap;
 use App\Livewire\Reports\DailySales;
 use App\Livewire\Reports\MonthlySales;
 use App\Livewire\Reports\ProductSales;
 use App\Livewire\Reports\WaiterSales;
+use App\Http\Controllers\CashRegisterController;
 
 /*
 |--------------------------------------------------------------------------
@@ -48,6 +51,12 @@ Route::middleware([
     Route::get('/dashboard', function () {
         return view('dashboard');
     })->name('dashboard');
+
+    // caja
+    Route::get('/cash-register', CashRegisterManagement::class)->name('cash-register.management');
+    Route::get('/cash-registers', CashRegisterTable::class)->name('cash-registers.index');
+    Route::get('/cash-registers/{id}/statement', [CashRegisterController::class, 'statement'])
+    ->name('cash-registers.statement');
 
     // Categories routes
     Route::get('/categories', CategoryTable::class)->name('categories.index');

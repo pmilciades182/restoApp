@@ -1,6 +1,6 @@
 <nav x-data="{ open: false }" class="bg-white border-b border-gray-100">
     <!-- Primary Navigation Menu -->
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8"  id="super_nav">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8" id="super_nav">
         <div class="flex justify-between h-16">
             <div class="flex">
                 <!-- Logo -->
@@ -36,6 +36,16 @@
                             class="absolute left-0 mt-10 w-48 rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5"
                             style="display: none;">
                             <div class="py-1">
+
+                                <a href="{{ route('cash-register.management') }}"
+                                    class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 {{ request()->routeIs('cash-register.*') ? 'bg-gray-100' : '' }}">
+                                    Abrir y Cerrar Caja
+                                </a>
+
+                                <a href="{{ route('cash-registers.index') }}"
+                                    class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 {{ request()->routeIs('cash-registers.*') ? 'bg-gray-100' : '' }}">
+                                    Reporte Caja
+                                </a>
 
                                 <a href="{{ route('invoices.index') }}"
                                     class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 {{ request()->routeIs('invoices.*') ? 'bg-gray-100' : '' }}">

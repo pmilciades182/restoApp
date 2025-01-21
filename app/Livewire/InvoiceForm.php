@@ -9,6 +9,8 @@ use App\Models\Client;
 use App\Models\ClientDocument;
 use App\Traits\HasBreadcrumbs;
 use Illuminate\Support\Facades\DB;
+use App\Models\CashRegister;
+use App\Models\PaymentMethod;
 
 class InvoiceForm extends Component
 {
@@ -39,6 +41,55 @@ class InvoiceForm extends Component
     public $available_products = [];
 
     protected $listeners = ['focusBarcode'];
+    public $currentCashRegister = null;
+    public $hasCashRegister = false;
+
+    public $payment_method = 'cash';
+    public $amount_received = 0;
+    public $reference_number = '';
+
+    public $paymentMethods = [];
+    public $totalPaid = 0;
+    public $remainingBalance = 0;
+
+
+
+    // Añadir este método al componente para calcular el vuelto
+    public function calculateChange()
+    {
+        return max(0, $this->amount_received - $this->total);
+    }
+
+    // Añadir este método para validar el método de pago
+    public function updatedPaymentMethod()
+    {
+        if ($this->payment_method !== 'cash') {
+            $this->amount_received = $this->total;
+        }
+    }
+
+
+    public function boot()
+    {
+        // Verificar si hay una caja abierta antes de permitir cualquier operación
+        $this->checkCashRegister();
+    }
+
+
+    private function checkCashRegister()
+    {
+        $this->currentCashRegister = CashRegister::getOpenRegister();
+        $this->hasCashRegister = !is_null($this->currentCashRegister);
+
+        if (!$this->hasCashRegister) {
+            \Log::warning('No hay caja abierta al intentar acceder al formulario de factura');
+        } else {
+            \Log::info('Caja abierta encontrada', [
+                'register_id' => $this->currentCashRegister->id,
+                'opened_at' => $this->currentCashRegister->opened_at
+            ]);
+        }
+    }
 
 
     public function handleClientAdded($clientId)
@@ -86,12 +137,77 @@ class InvoiceForm extends Component
     public function mount($invoiceId = null)
     {
         $this->invoice_date = now()->format('Y-m-d');
+        $this->checkCashRegister();
+
+        $this->addPaymentMethod();
+        $this->calculateBalances();
+
+        if (!$this->hasCashRegister) {
+            return;
+        }
 
         if ($invoiceId) {
             $this->invoiceId = $invoiceId;
             $this->editMode = true;
             $this->loadInvoice();
         }
+    }
+
+
+    public function removePaymentMethod($index)
+    {
+        unset($this->paymentMethods[$index]);
+        $this->paymentMethods = array_values($this->paymentMethods);
+        $this->calculateBalances();
+    }
+
+
+    public function getChange($index)
+    {
+        if ($this->paymentMethods[$index]['method'] === 'cash') {
+            $amount = floatval($this->paymentMethods[$index]['amount']);
+            $pendingBeforeThisPayment = $this->total - (collect($this->paymentMethods)
+                ->take($index)
+                ->sum('amount'));
+
+            return max(0, $amount - min($amount, $pendingBeforeThisPayment));
+        }
+        return 0;
+    }
+
+
+    public function calculateBalances()
+    {
+        // Calcular el total pagado sumando todos los montos directamente
+        $this->totalPaid = collect($this->paymentMethods)->sum(function ($payment) {
+            return floatval($payment['amount']);
+        });
+
+        // Calcular el saldo pendiente
+        $this->remainingBalance = $this->total - $this->totalPaid;
+
+        // Si hay sobrepago, ajustar el cambio/vuelto solo para pagos en efectivo
+        if ($this->totalPaid > $this->total) {
+            $cashPayments = collect($this->paymentMethods)->where('method', 'cash');
+            if ($cashPayments->isNotEmpty()) {
+                $lastCashPayment = $cashPayments->last();
+                $change = $this->totalPaid - $this->total;
+                // El vuelto se maneja por separado, pero el total pagado debe ser exacto
+                $this->totalPaid = $this->total;
+                $this->remainingBalance = 0;
+            }
+        }
+    }
+
+
+    // Métodos para gestionar los pagos
+    public function addPaymentMethod()
+    {
+        $this->paymentMethods[] = [
+            'method' => 'cash',
+            'amount' => 0,
+            'reference' => '',
+        ];
     }
 
     // Búsqueda de cliente por número de documento
@@ -371,6 +487,18 @@ class InvoiceForm extends Component
     public function store()
     {
         try {
+            // Verificar nuevamente si hay caja abierta antes de crear la factura
+            if (!$this->hasCashRegister) {
+                session()->flash('error', 'No hay una caja abierta. No se puede crear la factura.');
+                throw new \Exception('No hay una caja abierta. No se puede crear la factura.');
+            }
+
+            // Validar que el total pagado sea suficiente
+            if ($this->remainingBalance > 0) {
+                session()->flash('error', 'El monto total pagado debe cubrir el total de la factura.');
+                throw new \Exception('El monto total pagado debe cubrir el total de la factura.');
+            }
+
             // Mensajes de validación personalizados
             $messages = [
                 'client_id.required' => 'Debe seleccionar un cliente para crear la factura.',
@@ -395,30 +523,35 @@ class InvoiceForm extends Component
                 'items.*.quantity' => 'required|numeric|min:1',
             ], $messages);
 
-
             // Verificación adicional de existencia de productos y stock
             foreach ($this->items as $item) {
                 $product = Product::find($item['product_id']);
                 if (!$product) {
+                    session()->flash('error', "El producto seleccionado no existe.");
                     throw new \Exception("El producto seleccionado no existe.");
                 }
 
                 if ($product->stock < $item['quantity']) {
+                    session()->flash('error', "Stock insuficiente para el producto: {$product->name}");
                     throw new \Exception("Stock insuficiente para el producto: {$product->name}");
                 }
             }
 
             DB::beginTransaction();
 
-            // Crear la factura
+            // Crear la factura vinculándola con la caja actual
             $invoice = Invoice::create([
                 'client_id' => $this->client_id,
+                'cash_register_id' => $this->currentCashRegister->id, // Vinculación con la caja
                 'invoice_number' => $this->generateInvoiceNumber(),
                 'invoice_type' => 'standard',
                 'subtotal' => $this->total,
                 'tax' => 0,
                 'total' => $this->total,
                 'status' => 'pending',
+                'amount_paid' => 0, // Inicialmente no hay pago
+                'balance' => $this->total, // El balance inicial es el total
+                'payment_status' => 'unpaid', // Estado de pago inicial
                 'created_by' => auth()->id()
             ]);
 
@@ -430,7 +563,7 @@ class InvoiceForm extends Component
                     'unit_price' => $item['price'],
                     'subtotal' => $item['subtotal'],
                     'tax' => 0,
-                    'total' => $item['subtotal'] ,
+                    'total' => $item['subtotal'],
                     'created_by' => auth()->id()
                 ]);
 
@@ -439,12 +572,51 @@ class InvoiceForm extends Component
                 $product->decrement('stock', $item['quantity']);
             }
 
+            // Verificar que haya métodos de pago
+            if (empty($this->paymentMethods)) {
+                DB::rollBack();
+                session()->flash('error', 'Debe seleccionar al menos un método de pago.');
+                throw new \Exception('Debe seleccionar al menos un método de pago.');
+            }
+
+            // Registrar los pagos
+            $totalPayments = 0;
+            foreach ($this->paymentMethods as $payment) {
+                if ($payment['amount'] > 0) {
+                    // Verificar que el método de pago exista
+                    $paymentMethod = PaymentMethod::where('code', $payment['method'])->first();
+                    if (!$paymentMethod) {
+                        DB::rollBack();
+                        session()->flash('error', "Método de pago no válido: {$payment['method']}");
+                        throw new \Exception("Método de pago no válido: {$payment['method']}");
+                    }
+
+                    $invoice->payments()->create([
+                        'payment_method_id' => $paymentMethod->id,
+                        'cash_register_id' => $this->currentCashRegister->id,
+                        'amount' => $payment['method'] === 'cash' ?
+                            min($payment['amount'], $this->total) :
+                            $payment['amount'],
+                        'reference_number' => $payment['method'] !== 'cash' ? $payment['reference'] : null,
+                        'created_by' => auth()->id()
+                    ]);
+
+                    $totalPayments += $payment['amount'];
+                }
+            }
+
+            // Verificar que los pagos cubran el total
+            if ($totalPayments < $this->total) {
+                DB::rollBack();
+                session()->flash('error', 'El total de los pagos no cubre el monto de la factura.');
+                throw new \Exception('El total de los pagos no cubre el monto de la factura.');
+            }
+
             DB::commit();
 
             // Limpiar el formulario
             $this->reset(['items', 'client_id', 'client', 'document_number', 'selected_document_type']);
             $this->calculateTotals();
-
 
             session()->flash('message', 'Factura creada exitosamente.');
 
@@ -456,16 +628,22 @@ class InvoiceForm extends Component
             throw $e;
         } catch (\Exception $e) {
             DB::rollBack();
-            // Log del error para debugging
             \Log::error('Error al crear factura:', [
                 'error' => $e->getMessage(),
                 'trace' => $e->getTraceAsString()
             ]);
-            session()->flash('error', 'Error al crear la factura: ' . $e->getMessage());
+            // Si no se ha establecido ya un mensaje flash, agregar uno genérico
+            if (!session()->has('error')) {
+                session()->flash('error', 'Error al crear la factura: ' . $e->getMessage());
+            }
+
+            // For Livewire, you might want to add:
+            $this->addError('invoice_error', $e->getMessage());
+
+
             return null;
         }
     }
-
 
     public function update()
     {
@@ -499,7 +677,7 @@ class InvoiceForm extends Component
                     'unit_price' => $item['price'],
                     'subtotal' => $item['subtotal'],
                     'tax' => 0,
-                    'total' => $item['subtotal'] ,
+                    'total' => $item['subtotal'],
                     'created_by' => auth()->id()
                 ]);
             }
@@ -536,6 +714,19 @@ class InvoiceForm extends Component
 
     public function render()
     {
+
+        // Check for any existing error messages
+        if (session()->has('error')) {
+            $this->addError('invoice_error', session('error'));
+        }
+
+        if (!$this->hasCashRegister) {
+            return view('livewire.invoice.no-cash-register', [
+                'breadcrumbs' => $this->getBaseBreadcrumbs()
+            ])->layout('layouts.app');
+        }
+
+
         return view('livewire.invoice.invoice-form', [
             'breadcrumbs' => $this->getBaseBreadcrumbs()
         ])->layout('layouts.app');
@@ -644,6 +835,13 @@ class InvoiceForm extends Component
                 session()->flash('error', 'Error al buscar el producto');
             }
         }
+    }
+
+
+    // Listeners para actualizar los cálculos cuando cambian los pagos
+    public function updatedPaymentMethods()
+    {
+        $this->calculateBalances();
     }
 
 
