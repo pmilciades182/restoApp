@@ -195,8 +195,10 @@
             * {
                 visibility: hidden;
                 margin: 0 !important;
+
                 padding: 0 !important;
                 box-sizing: border-box;
+                font-size: 8pt;
             }
 
             /* Eliminar elementos del layout por defecto */
@@ -209,12 +211,12 @@
 
             /* Configuración general del documento */
             body {
-                width: 80mm;
-                margin: 0 !important;
+                width: 70mm;
+                margin-left: 10px;
                 padding: 0 !important;
-                font-size: 10pt;
+
                 line-height: 1.2;
-                font-family: "Courier New", monospace;
+                font-family: monospace;
             }
 
             /* Hacer visible solo el contenido principal */
@@ -251,7 +253,7 @@
 
             /* Ajustes de encabezado */
             h2 {
-                font-size: 12pt;
+
                 font-weight: bold;
                 text-align: center;
                 margin-bottom: 2mm !important;
@@ -259,7 +261,7 @@
 
             /* Ajustes de texto */
             p {
-                font-size: 9pt;
+
                 margin: 1mm 0 !important;
             }
 
