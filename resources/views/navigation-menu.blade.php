@@ -74,10 +74,19 @@
                                 </a>
 
 
+                                <a href="{{ route('invoices.reports.products') }}"
+                                    class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 {{ request()->routeIs('invoices.reports.*') ? 'bg-gray-100' : '' }}">
+                                    Reporte de Ventas
+                                </a>
+
+
                                 <!-- Espacio para más items del menú -->
 
                             </div>
                         </div>
+
+
+
 
 
 

@@ -56,7 +56,7 @@ Route::middleware([
     Route::get('/cash-register', CashRegisterManagement::class)->name('cash-register.management');
     Route::get('/cash-registers', CashRegisterTable::class)->name('cash-registers.index');
     Route::get('/cash-registers/{id}/statement', [CashRegisterController::class, 'statement'])
-    ->name('cash-registers.statement');
+        ->name('cash-registers.statement');
 
     // Categories routes
     Route::get('/categories', CategoryTable::class)->name('categories.index');
@@ -87,6 +87,14 @@ Route::middleware([
     Route::get('/document-types/create/{redirect_to?}', DocumentTypeForm::class)->name('document-types.create');
     Route::get('/document-types/{documentTypeId}/edit', DocumentTypeForm::class)->name('document-types.edit');
 
+
+    //reporte de ventas
+    Route::prefix('invoices/reports')->group(function () {
+        Route::get('/products', ProductSales::class)->name('invoices.reports.products');
+    });
+
+
+
     // Invoices routes
     Route::prefix('invoices')->group(function () {
         // Vista principal de facturas
@@ -110,6 +118,7 @@ Route::middleware([
             Route::get('/products', ProductSales::class)->name('invoices.reports.products');
             Route::get('/waiters', WaiterSales::class)->name('invoices.reports.waiters');
         });
+
 
         // Exportación de documentos
         Route::controller(App\Http\Controllers\InvoiceController::class)->group(function () {
