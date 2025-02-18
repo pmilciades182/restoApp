@@ -139,9 +139,8 @@
                     </div>
 
                     <!-- Búsqueda por nombre/código -->
-                    <div>
-                        <label for="search_product" class="block text-sm font-medium text-gray-700">Buscar
-                            Producto</label>
+                    <div style="position: relative;">
+                        <label for="search_product" class="block text-sm font-medium text-gray-700">Buscar Producto</label>
                         <div class="mt-1 flex rounded-md shadow-sm">
                             <input type="text" id="search_product" wire:model.live.debounce.300ms="search_product"
                                 class="rounded-l-md focus:ring-indigo-500 focus:border-indigo-500 flex-1 block w-full border-gray-300 sm:text-sm"
@@ -151,24 +150,29 @@
                                 Buscar
                             </button>
                         </div>
+
+                        <!-- Lista de productos siempre debajo del input con posición fija -->
                         @if ($available_products && count($available_products) > 0)
-                            <ul class="absolute z-10 mt-1 w-full bg-white border border-gray-200 rounded-md shadow-lg max-h-60 overflow-auto"
-                                style="max-width: 500px">
-                                @foreach ($available_products as $product)
-                                    <li wire:click="selectProduct({{ $product['id'] }})"
-                                        class="px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 cursor-pointer flex justify-between items-center">
-                                        <div>
-                                            <span class="font-medium">{{ $product['name'] }}</span>
-                                            @if (isset($product['barcode']) && $product['barcode'])
-                                                <span
-                                                    class="text-xs text-gray-500 block">{{ $product['barcode'] }}</span>
-                                            @endif
-                                        </div>
-                                        <span class="text-sm text-gray-600">Gs.
-                                            {{ number_format($product['price'], 0, ',', '.') }}</span>
-                                    </li>
-                                @endforeach
-                            </ul>
+                            <div style="position: relative; width: 100%;">
+                                <div style="position: absolute; top: 0; left: 0; width: 100%; z-index: 1000;">
+                                    <ul style="max-height: 300px; overflow-y: auto; background: white; border: 1px solid #ccc; border-radius: 4px; margin-top: 4px; width: 100%; box-shadow: 0 2px 5px rgba(0,0,0,0.2);">
+                                        @foreach ($available_products as $product)
+                                            <li wire:click="selectProduct({{ $product['id'] }})"
+                                                style="padding: 8px 12px; cursor: pointer; border-bottom: 1px solid #eee; display: flex; justify-content: space-between; align-items: center;"
+                                                onmouseover="this.style.backgroundColor='#f3f4f6'"
+                                                onmouseout="this.style.backgroundColor='transparent'">
+                                                <div>
+                                                    <span style="font-weight: 500;">{{ $product['name'] }}</span>
+                                                    @if (isset($product['barcode']) && $product['barcode'])
+                                                        <br><span style="font-size: 0.8em; color: #6b7280;">{{ $product['barcode'] }}</span>
+                                                    @endif
+                                                </div>
+                                                <span style="font-size: 0.9em; color: #374151;">Gs. {{ number_format($product['price'], 0, ',', '.') }}</span>
+                                            </li>
+                                        @endforeach
+                                    </ul>
+                                </div>
+                            </div>
                         @endif
                     </div>
                 </div>
@@ -180,9 +184,7 @@
                             <div class="flex">
                                 <div class="flex-shrink-0">
                                     <svg class="h-5 w-5 text-green-400" fill="currentColor" viewBox="0 0 20 20">
-                                        <path fill-rule="evenodd"
-                                            d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
-                                            clip-rule="evenodd" />
+                                        <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
                                     </svg>
                                 </div>
                                 <div class="ml-3">
