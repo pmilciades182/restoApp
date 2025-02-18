@@ -118,11 +118,13 @@
 
             <div class="bg-white rounded-lg shadow p-4">
                 <h3 class="text-lg font-medium text-gray-900 mb-3">Productos</h3>
+
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-3">
+                    <!-- Código de Barras -->
                     <div>
                         <label for="barcode" class="block text-sm font-medium text-gray-700">Código de Barras</label>
                         <div class="mt-1 flex rounded-md shadow-sm">
-                            <input type="text" id="barcode" wire:model="barcode"
+                            <input type="text" id="barcode" wire:model.live="barcode"
                                 wire:keydown.enter="addProductByBarcode"
                                 class="rounded-l-md focus:ring-indigo-500 focus:border-indigo-500 flex-1 block w-full border-gray-300 sm:text-sm"
                                 placeholder="Ingrese código de barras">
@@ -132,11 +134,65 @@
                             </button>
                         </div>
                         @error('barcode')
-                            <span class="error">{{ $message }}</span>
+                            <span class="text-sm text-red-600">{{ $message }}</span>
                         @enderror
                     </div>
 
+                    <!-- Búsqueda por nombre/código -->
+                    <div>
+                        <label for="search_product" class="block text-sm font-medium text-gray-700">Buscar
+                            Producto</label>
+                        <div class="mt-1 flex rounded-md shadow-sm">
+                            <input type="text" id="search_product" wire:model.live.debounce.300ms="search_product"
+                                class="rounded-l-md focus:ring-indigo-500 focus:border-indigo-500 flex-1 block w-full border-gray-300 sm:text-sm"
+                                placeholder="Buscar por nombre o código">
+                            <button wire:click="addProductBySearch"
+                                class="rounded-r-md px-3 py-2 bg-indigo-600 text-white text-sm font-medium hover:bg-indigo-700">
+                                Buscar
+                            </button>
+                        </div>
+                        @if ($available_products && count($available_products) > 0)
+                            <ul class="absolute z-10 mt-1 w-full bg-white border border-gray-200 rounded-md shadow-lg max-h-60 overflow-auto"
+                                style="max-width: 500px">
+                                @foreach ($available_products as $product)
+                                    <li wire:click="selectProduct({{ $product['id'] }})"
+                                        class="px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 cursor-pointer flex justify-between items-center">
+                                        <div>
+                                            <span class="font-medium">{{ $product['name'] }}</span>
+                                            @if (isset($product['barcode']) && $product['barcode'])
+                                                <span
+                                                    class="text-xs text-gray-500 block">{{ $product['barcode'] }}</span>
+                                            @endif
+                                        </div>
+                                        <span class="text-sm text-gray-600">Gs.
+                                            {{ number_format($product['price'], 0, ',', '.') }}</span>
+                                    </li>
+                                @endforeach
+                            </ul>
+                        @endif
+                    </div>
                 </div>
+
+                <!-- Lista de productos agregados recientemente (opcional) -->
+                <div class="mb-4">
+                    @if (session()->has('message'))
+                        <div class="rounded-md bg-green-50 p-4 mb-4">
+                            <div class="flex">
+                                <div class="flex-shrink-0">
+                                    <svg class="h-5 w-5 text-green-400" fill="currentColor" viewBox="0 0 20 20">
+                                        <path fill-rule="evenodd"
+                                            d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
+                                            clip-rule="evenodd" />
+                                    </svg>
+                                </div>
+                                <div class="ml-3">
+                                    <p class="text-sm font-medium text-green-800">{{ session('message') }}</p>
+                                </div>
+                            </div>
+                        </div>
+                    @endif
+                </div>
+
 
                 <div class="overflow-x-auto">
                     <table class="min-w-full divide-y divide-gray-200">
