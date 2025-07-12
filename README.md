@@ -1,224 +1,66 @@
-# RestoApp - Sistema de Gestión para Restaurantes
+<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
 
-Sistema completo de gestión para restaurantes desarrollado con Laravel 10, que incluye punto de venta (POS), gestión de inventario, facturación, reportes y más.
+<p align="center">
+<a href="https://github.com/laravel/framework/actions"><img src="https://github.com/laravel/framework/workflows/tests/badge.svg" alt="Build Status"></a>
+<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
+<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
+<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
+</p>
 
-## 🚀 Características Principales
+## About Laravel
 
-- **Punto de Venta (POS)** - Interfaz intuitiva para tomar órdenes
-- **Gestión de Inventario** - Control de productos y categorías
-- **Facturación Electrónica** - Generación de facturas y tickets
-- **Gestión de Clientes** - Base de datos de clientes con documentos
-- **Control de Caja** - Apertura/cierre de cajas registradoras
-- **Reportes de Ventas** - Análisis diario, mensual y por productos
-- **Gestión de Mesas** - Control de mesas y meseros
-- **Pantalla de Cocina** - Display para preparación de órdenes
+Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
 
-## 🛠️ Tecnologías
+- [Simple, fast routing engine](https://laravel.com/docs/routing).
+- [Powerful dependency injection container](https://laravel.com/docs/container).
+- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
+- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
+- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
+- [Robust background job processing](https://laravel.com/docs/queues).
+- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
 
-- **Backend**: Laravel 10 + Jetstream
-- **Frontend**: Livewire 3 + Alpine.js + Tailwind CSS
-- **Base de Datos**: MySQL 8.0
-- **Caché**: Redis
-- **Containerización**: Docker + Docker Compose
+Laravel is accessible, powerful, and provides tools required for large, robust applications.
 
-## 📋 Requisitos Previos
+## Learning Laravel
 
-- Docker y Docker Compose instalados
-- Git
-- Puertos disponibles: 8080 (app), 3307 (MySQL), 6380 (Redis), 1026 (mail), 8026 (mail dashboard)
+Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework.
 
-## 🚀 Instalación Rápida con Docker
+You may also try the [Laravel Bootcamp](https://bootcamp.laravel.com), where you will be guided through building a modern Laravel application from scratch.
 
-### 1. Clonar el repositorio
-```bash
-git clone <repository-url>
-cd restoApp
-```
+If you don't feel like reading, [Laracasts](https://laracasts.com) can help. Laracasts contains thousands of video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
 
-### 2. Configurar el entorno
-```bash
-# Copiar archivo de configuración
-cp .env.example .env
+## Laravel Sponsors
 
-# Opcional: Editar .env si necesitas cambiar puertos o credenciales
-nano .env
-```
+We would like to extend our thanks to the following sponsors for funding Laravel development. If you are interested in becoming a sponsor, please visit the [Laravel Partners program](https://partners.laravel.com).
 
-### 3. Levantar los servicios
-```bash
-# Construir e iniciar contenedores
-docker-compose up -d --build
+### Premium Partners
 
-# Verificar que todos los servicios estén ejecutándose
-docker-compose ps
-```
+- **[Vehikl](https://vehikl.com/)**
+- **[Tighten Co.](https://tighten.co)**
+- **[WebReinvent](https://webreinvent.com/)**
+- **[Kirschbaum Development Group](https://kirschbaumdevelopment.com)**
+- **[64 Robots](https://64robots.com)**
+- **[Curotec](https://www.curotec.com/services/technologies/laravel/)**
+- **[Cyber-Duck](https://cyber-duck.co.uk)**
+- **[DevSquad](https://devsquad.com/hire-laravel-developers)**
+- **[Jump24](https://jump24.co.uk)**
+- **[Redberry](https://redberry.international/laravel/)**
+- **[Active Logic](https://activelogic.com)**
+- **[byte5](https://byte5.de)**
+- **[OP.GG](https://op.gg)**
 
-### 4. Configurar la aplicación Laravel
-```bash
-# Generar clave de aplicación
-docker-compose exec app php artisan key:generate
+## Contributing
 
-# Instalar dependencias de Composer
-docker-compose exec app composer install
+Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
 
-# Instalar dependencias de Node.js
-docker-compose exec app npm install
+## Code of Conduct
 
-# Ejecutar migraciones
-docker-compose exec app php artisan migrate
+In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
 
-# Opcional: Ejecutar seeders para datos de prueba
-docker-compose exec app php artisan db:seed
-```
+## Security Vulnerabilities
 
-### 5. Compilar assets frontend
-```bash
-# Para desarrollo (con watch)
-docker-compose exec app npm run dev
+If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
 
-# Para producción
-docker-compose exec app npm run build
-```
+## License
 
-## 🌐 Acceso a la Aplicación
-
-Una vez instalado, puedes acceder a:
-
-- **Aplicación Principal**: http://localhost:8080
-- **Mailpit (Mail Testing)**: http://localhost:8026
-- **Base de Datos MySQL**: `localhost:3307`
-- **Redis**: `localhost:6380`
-
-### Credenciales por Defecto
-
-**Base de Datos:**
-- Host: `localhost:3307`
-- Usuario: `restoapp_user`
-- Contraseña: `restoapp_pass`
-- Base de datos: `restoapp`
-
-## 🔧 Comandos Útiles de Desarrollo
-
-### Gestión de contenedores
-```bash
-# Iniciar servicios
-docker-compose up -d
-
-# Detener servicios
-docker-compose down
-
-# Ver logs
-docker-compose logs -f
-
-# Acceder al contenedor de la aplicación
-docker-compose exec app bash
-```
-
-### Comandos Laravel
-```bash
-# Ejecutar migraciones
-docker-compose exec app php artisan migrate
-
-# Limpiar cachés
-docker-compose exec app php artisan cache:clear
-docker-compose exec app php artisan config:clear
-docker-compose exec app php artisan view:clear
-
-# Ejecutar tests
-docker-compose exec app php artisan test
-
-# Generar documentación API
-docker-compose exec app php artisan route:list
-```
-
-### Frontend
-```bash
-# Modo desarrollo con hot reload
-docker-compose exec app npm run dev
-
-# Build para producción
-docker-compose exec app npm run build
-
-# Instalar nueva dependencia
-docker-compose exec app npm install package-name
-```
-
-## 🗄️ Estructura de Base de Datos
-
-El sistema incluye las siguientes tablas principales:
-
-- `users` - Usuarios del sistema
-- `categories` - Categorías de productos
-- `products` - Inventario de productos
-- `clients` - Base de datos de clientes
-- `invoices` - Facturas/órdenes
-- `invoice_details` - Detalles de factura
-- `cash_registers` - Control de cajas registradoras
-- `invoice_payments` - Pagos de facturas
-
-## 🧪 Testing
-
-```bash
-# Ejecutar todos los tests
-docker-compose exec app php artisan test
-
-# Ejecutar tests específicos
-docker-compose exec app php artisan test --testsuite=Feature
-docker-compose exec app php artisan test --testsuite=Unit
-
-# Con coverage (requiere Xdebug)
-docker-compose exec app php artisan test --coverage
-```
-
-## 🐛 Troubleshooting
-
-### Problemas Comunes
-
-**1. Error de conexión a MySQL**
-```bash
-# Verificar que MySQL esté saludable
-docker-compose exec mysql mysqladmin ping -h localhost -u restoapp_user -p
-
-# Reiniciar servicios de base de datos
-docker-compose restart mysql
-```
-
-**2. Permisos de archivos**
-```bash
-# Ajustar permisos (Linux/macOS)
-sudo chown -R $USER:$USER .
-docker-compose exec app chown -R www-data:www-data /var/www/html/storage
-docker-compose exec app chown -R www-data:www-data /var/www/html/bootstrap/cache
-```
-
-**3. Puertos ocupados**
-```bash
-# Verificar puertos en uso
-sudo netstat -tulpn | grep :8080
-
-# Cambiar puertos en .env si es necesario
-APP_PORT=8081
-FORWARD_DB_PORT=3308
-```
-
-**4. Limpiar todo y empezar de nuevo**
-```bash
-# Detener y eliminar contenedores
-docker-compose down -v
-
-# Eliminar imágenes
-docker-compose down --rmi all
-
-# Reconstruir desde cero
-docker-compose up -d --build
-```
-
-## 📚 Documentación Adicional
-
-- [Laravel Documentation](https://laravel.com/docs)
-- [Livewire Documentation](https://livewire.laravel.com)
-- [Tailwind CSS](https://tailwindcss.com)
-
-## 📄 Licencia
-
-Este proyecto está bajo la Licencia MIT. Ver el archivo `LICENSE` para más detalles.
+The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).

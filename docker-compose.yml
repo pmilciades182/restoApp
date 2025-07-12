@@ -1,19 +1,18 @@
 services:
-    app:
+    laravel.test:
         build:
             context: './vendor/laravel/sail/runtimes/8.4'
             dockerfile: Dockerfile
             args:
-                WWWGROUP: '${WWWGROUP:-1000}'
-        image: 'restoapp/laravel'
-        container_name: 'restoapp_web'
+                WWWGROUP: '${WWWGROUP}'
+        image: 'sail-8.4/app'
         extra_hosts:
             - 'host.docker.internal:host-gateway'
         ports:
-            - '${APP_PORT:-8080}:80'
-            - '${VITE_PORT:-5174}:${VITE_PORT:-5174}'
+            - '${APP_PORT:-80}:80'
+            - '${VITE_PORT:-5173}:${VITE_PORT:-5173}'
         environment:
-            WWWUSER: '${WWWUSER:-1000}'
+            WWWUSER: '${WWWUSER}'
             LARAVEL_SAIL: 1
             XDEBUG_MODE: '${SAIL_XDEBUG_MODE:-off}'
             XDEBUG_CONFIG: '${SAIL_XDEBUG_CONFIG:-client_host=host.docker.internal}'
@@ -21,68 +20,35 @@ services:
         volumes:
             - '.:/var/www/html'
         networks:
-            - restoapp
+            - sail
         depends_on:
-            mysql:
-                condition: service_healthy
-        restart: unless-stopped
-
+            - mysql
     mysql:
-        image: 'mysql:8.0'
-        container_name: 'restoapp_mysql'
+        image: 'mysql/mysql-server:8.0'
         ports:
-            - '${FORWARD_DB_PORT:-3307}:3306'
+            - '${FORWARD_DB_PORT:-3306}:3306'
         environment:
-            MYSQL_ROOT_PASSWORD: '${DB_ROOT_PASSWORD:-root_secret}'
-            MYSQL_DATABASE: '${DB_DATABASE:-restoapp}'
-            MYSQL_USER: '${DB_USERNAME:-restoapp_user}'
-            MYSQL_PASSWORD: '${DB_PASSWORD:-restoapp_pass}'
-            MYSQL_ALLOW_EMPTY_PASSWORD: 'no'
+            MYSQL_ROOT_PASSWORD: '${DB_PASSWORD}'
+            MYSQL_ROOT_HOST: '%'
+            MYSQL_DATABASE: '${DB_DATABASE}'
+            MYSQL_USER: '${DB_USERNAME}'
+            MYSQL_PASSWORD: '${DB_PASSWORD}'
         volumes:
-            - 'restoapp-mysql:/var/lib/mysql'
-            - './docker/mysql/init:/docker-entrypoint-initdb.d'
+            - 'sail-mysql:/var/lib/mysql'
+            - './vendor/laravel/sail/database/mysql/create-testing-database.sh:/docker-entrypoint-initdb.d/10-create-testing-database.sh'
         networks:
-            - restoapp
+            - sail
         healthcheck:
-            test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "restoapp_user", "-prestoapp_pass"]
-            interval: 10s
-            timeout: 5s
-            retries: 5
-            start_period: 30s
-        restart: unless-stopped
-        command: --default-authentication-plugin=mysql_native_password --character-set-server=utf8mb4 --collation-server=utf8mb4_unicode_ci
-
-    redis:
-        image: 'redis:7-alpine'
-        container_name: 'restoapp_redis'
-        ports:
-            - '${FORWARD_REDIS_PORT:-6380}:6379'
-        volumes:
-            - 'restoapp-redis:/data'
-        networks:
-            - restoapp
-        healthcheck:
-            test: ["CMD", "redis-cli", "ping"]
-            interval: 10s
-            timeout: 5s
+            test:
+                - CMD
+                - mysqladmin
+                - ping
+                - '-p${DB_PASSWORD}'
             retries: 3
-        restart: unless-stopped
-
-    mailpit:
-        image: 'axllent/mailpit:latest'
-        container_name: 'restoapp_mail'
-        ports:
-            - '${FORWARD_MAILPIT_PORT:-1026}:1025'
-            - '${FORWARD_MAILPIT_DASHBOARD_PORT:-8026}:8025'
-        networks:
-            - restoapp
-        restart: unless-stopped
+            timeout: 5s
 networks:
-    restoapp:
+    sail:
         driver: bridge
-
 volumes:
-    restoapp-mysql:
-        driver: local
-    restoapp-redis:
+    sail-mysql:
         driver: local
