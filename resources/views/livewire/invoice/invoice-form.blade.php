@@ -38,14 +38,16 @@
 
 
                 <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                    <div>
-                        <label for="document_number" class="block text-sm font-medium text-gray-700">Número de
-                            Documento</label>
+                    <div x-data="{ search: @entangle('document_number') }">
+                        <label for="document_number" class="block text-sm font-medium text-gray-700">Documento o Nombre</label>
                         <div class="mt-1 flex rounded-md shadow-sm">
-                            <input type="text" wire:model.live.debounce.300ms="document_number"
-                                wire:keydown.enter="searchClient"
-                                class="rounded-l-md focus:ring-indigo-500 focus:border-indigo-500 flex-1 block w-full border-gray-300 sm:text-sm"
-                                placeholder="Buscar cliente">
+                            <input type="text"
+                                   id="document_number"
+                                   wire:model.live.debounce.300ms="document_number"
+                                   x-on:input="search = $event.target.value.toUpperCase().replace(/[^A-Z0-9\s]/g, '')"
+                                   wire:keydown.enter="searchClient"
+                                   class="rounded-l-md focus:ring-indigo-500 focus:border-indigo-500 flex-1 block w-full border-gray-300 sm:text-sm"
+                                   placeholder="Buscar por documento o nombre">
                             <button wire:click="searchClient"
                                 class="rounded-r-md px-3 py-2 bg-indigo-600 text-white text-sm font-medium hover:bg-indigo-700">
                                 Buscar
@@ -55,10 +57,12 @@
                             <ul class="absolute z-10 mt-1 w-full bg-white border border-gray-200 rounded-md shadow-lg"
                                 style="max-width:500px">
                                 @foreach ($available_documents as $doc)
-                                    <li wire:click="selectDocument({{ $doc['id'] }})"
+                                    <li wire:click="selectDocument('{{ $doc['id'] }}')"
                                         class="px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 cursor-pointer">
-                                        <span class="font-medium">{{ $doc['document_number'] }}</span> -
-                                        {{ $doc['client_name'] }} ({{ $doc['document_type'] }})
+                                        <span class="font-medium">{{ $doc['client_name'] }}</span>
+                                        @if($doc['document_number'] !== 'N/A')
+                                            - ({{ $doc['document_type'] }} - {{ $doc['document_number'] }})
+                                        @endif
                                     </li>
                                 @endforeach
                             </ul>
@@ -66,7 +70,9 @@
                         @if ($client)
                             <div class="mt-2 p-2 bg-gray-100 rounded-md">
                                 Cliente Seleccionado: <span class="font-medium">{{ $client->full_name }}</span>
-                                ({{ $selected_document_type }} - {{ $document_number }})
+                                @if($document_number !== 'N/A')
+                                    ({{ $selected_document_type }} - {{ $document_number }})
+                                @endif
                             </div>
                         @endif
                     </div>

@@ -213,31 +213,53 @@ class InvoiceForm extends Component
     // Búsqueda de cliente por número de documento
     public function updatedDocumentNumber()
     {
+        $searchTerm = strtoupper(preg_replace('/[^A-Za-z0-9\s]/', '', $this->document_number));
+
         \Log::info('updatedDocumentNumber called', [
             'document_number' => $this->document_number,
-            'length' => strlen($this->document_number)
+            'searchTerm' => $searchTerm,
+            'length' => strlen($searchTerm)
         ]);
 
-        if (strlen($this->document_number) >= 3) {
-            \Log::info('Searching for documents');
+        if (strlen($searchTerm) >= 3) {
+            \Log::info('Searching for clients and documents');
 
-            $documents = ClientDocument::where('document_number', 'like', $this->document_number . '%')
-                ->with(['client', 'documentType'])  // Cargar explícitamente la relación client
-                ->get();
+            $clients = Client::where(function ($query) use ($searchTerm) {
+                $query->where(DB::raw("UPPER(CONCAT(first_name, ' ', last_name))"), 'like', '%' . $searchTerm . '%')
+                      ->orWhere(DB::raw("UPPER(business_name)"), 'like', '%' . $searchTerm . '%')
+                      ->orWhere(DB::raw("UPPER(first_name)"), 'like', '%' . $searchTerm . '%')
+                      ->orWhere(DB::raw("UPPER(last_name)"), 'like', '%' . $searchTerm . '%');
+            })
+            ->orWhereHas('documents', function ($query) use ($searchTerm) {
+                $query->where('document_number', 'like', '%' . $searchTerm . '%');
+            })
+            ->with('documents.documentType')
+            ->get();
 
-            \Log::info('Found documents', [
-                'count' => $documents->count(),
-                'documents' => $documents->toArray()
+            \Log::info('Found clients', [
+                'count' => $clients->count(),
+                'clients' => $clients->toArray()
             ]);
-
-            $this->available_documents = $documents->map(function ($doc) {
-                return [
-                    'id' => $doc->id,
-                    'document_type' => $doc->documentType->name,
-                    'document_number' => $doc->document_number,
-                    'client_id' => $doc->client_id,
-                    'client_name' => $doc->client ? $doc->client->full_name : 'Cliente no disponible'
-                ];
+            
+            $this->available_documents = $clients->flatMap(function ($client) {
+                if ($client->documents->isNotEmpty()) {
+                    return $client->documents->map(function ($doc) use ($client) {
+                        return [
+                            'id' => $doc->id,
+                            'document_type' => $doc->documentType->name,
+                            'document_number' => $doc->document_number,
+                            'client_id' => $client->id,
+                            'client_name' => $client->full_name
+                        ];
+                    });
+                }
+                return [[
+                    'id' => 'client-'.$client->id, 
+                    'document_type' => 'N/A',
+                    'document_number' => 'N/A',
+                    'client_id' => $client->id,
+                    'client_name' => $client->full_name
+                ]];
             })->toArray();
 
             \Log::info('Mapped documents', [
@@ -373,16 +395,34 @@ class InvoiceForm extends Component
         ]);
 
         try {
-            $document = ClientDocument::with(['client', 'documentType'])->find($documentId);
+            if (str_starts_with($documentId, 'client-')) {
+                $clientId = substr($documentId, 7);
+                $client = Client::with('documents.documentType')->find($clientId);
 
-            \Log::info('Document found', [
-                'document' => $document->toArray()
-            ]);
+                if ($client) {
+                    $this->client = $client;
+                    $this->client_id = $client->id;
+                    
+                    $primaryDoc = $client->primaryDocument;
+                    if ($primaryDoc) {
+                        $this->selected_document_type = $primaryDoc->documentType->name;
+                        $this->document_number = $primaryDoc->document_number;
+                    } else {
+                        $this->selected_document_type = 'N/A';
+                        $this->document_number = $client->full_name;
+                    }
+                }
+            } else {
+                $document = ClientDocument::with(['client', 'documentType'])->find($documentId);
 
-            $this->client = $document->client;
-            $this->client_id = $document->client_id;
-            $this->selected_document_type = $document->documentType->name;
-            $this->document_number = $document->document_number;
+                if ($document) {
+                    $this->client = $document->client;
+                    $this->client_id = $document->client_id;
+                    $this->selected_document_type = $document->documentType->name;
+                    $this->document_number = $document->document_number;
+                }
+            }
+
             $this->available_documents = [];
 
             \Log::info('Client selected', [
