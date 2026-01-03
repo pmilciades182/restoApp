@@ -24,6 +24,7 @@ use App\Livewire\TableMap;
 use App\Livewire\Reports\DailySales;
 use App\Livewire\Reports\MonthlySales;
 use App\Livewire\Reports\ProductSales;
+use App\Livewire\Reports\ClientSales;
 use App\Livewire\Reports\WaiterSales;
 use App\Http\Controllers\CashRegisterController;
 
@@ -116,6 +117,7 @@ Route::middleware([
             Route::get('/daily', DailySales::class)->name('invoices.reports.daily');
             Route::get('/monthly', MonthlySales::class)->name('invoices.reports.monthly');
             Route::get('/products', ProductSales::class)->name('invoices.reports.products');
+            Route::get('/clients', ClientSales::class)->name('invoices.reports.clients');
             Route::get('/waiters', WaiterSales::class)->name('invoices.reports.waiters');
         });
 

@@ -74,10 +74,29 @@
                                 </a>
 
 
-                                <a href="{{ route('invoices.reports.products') }}"
-                                    class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 {{ request()->routeIs('invoices.reports.*') ? 'bg-gray-100' : '' }}">
-                                    Reporte de Ventas
-                                </a>
+                                <!-- Submenú de Reportes -->
+                                <div class="relative" x-data="{ openReports: false }">
+                                    <button @click.stop="openReports = !openReports"
+                                        class="w-full flex items-center justify-between px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 {{ request()->routeIs('invoices.reports.*') ? 'bg-gray-100' : '' }}">
+                                        <span>Reportes</span>
+                                        <svg class="h-4 w-4 transform transition-transform duration-200"
+                                            :class="{ 'rotate-90': openReports }" fill="currentColor" viewBox="0 0 20 20">
+                                            <path fill-rule="evenodd"
+                                                d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z"
+                                                clip-rule="evenodd" />
+                                        </svg>
+                                    </button>
+                                    <div x-show="openReports" x-transition class="bg-gray-50" @click.stop>
+                                        <a href="{{ route('invoices.reports.products') }}"
+                                            class="block px-8 py-2 text-sm text-gray-600 hover:bg-gray-200 {{ request()->routeIs('invoices.reports.products') ? 'bg-gray-200' : '' }}">
+                                            Venta de Productos
+                                        </a>
+                                        <a href="{{ route('invoices.reports.clients') }}"
+                                            class="block px-8 py-2 text-sm text-gray-600 hover:bg-gray-200 {{ request()->routeIs('invoices.reports.clients') ? 'bg-gray-200' : '' }}">
+                                            Venta por Cliente
+                                        </a>
+                                    </div>
+                                </div>
 
 
                                 <!-- Espacio para más items del menú -->

@@ -17,3 +17,11 @@ yarn-error.log
 /.fleet
 /.idea
 /.vscode
+.claude/
+restoapp.sql
+
+# Claude Code
+.claude/
+
+# Database backups
+restoapp.sql
